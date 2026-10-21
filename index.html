@@ -36,7 +36,7 @@
   input:focus,select:focus,button:focus-visible,summary:focus-visible{outline:3px solid var(--blue-600);outline-offset:2px;border-color:var(--blue-600)}
   input[aria-invalid=true],select[aria-invalid=true]{border-color:var(--bad)}
   .err{color:var(--bad);font-size:.9rem;margin-top:4px;min-height:0}
-  .row{display:flex;gap:12px}.row>div{flex:1;min-width:0}
+  .row{display:flex;gap:12px}@media (max-width:420px){.row .hint{min-height:3em}}.row>div{flex:1;min-width:0}
   .radio{display:flex;align-items:flex-start;gap:10px;min-height:48px;padding:8px 0;font-weight:400;margin:0}
   .radio input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--purple-700);flex:none}
   .radio span b{font-weight:600}
@@ -101,13 +101,14 @@
 
     <div class="row">
       <div>
-        <label for="line">Line
-          <span class="hint" id="lineHint">Your line in week 1</span></label>
+        <label for="line">Line number
+          <span class="hint" id="lineHint">Line you start on</span></label>
         <input type="number" id="line" name="line" inputmode="numeric" min="1" step="1" required>
         <div class="err" id="err-line"></div>
       </div>
       <div>
-        <label for="weeks">Length</label>
+        <label for="weeks">Duration
+          <span class="hint">weeks</span></label>
         <select id="weeks" name="weeks"></select>
       </div>
     </div>
@@ -177,7 +178,7 @@
     links.forEach(function(l){ var op=document.createElement('option'); op.value=l.link; op.textContent=l.link; linkSel.appendChild(op); });
     var other=document.createElement('option'); other.value=OTHER; other.textContent="My link isn't listed"; linkSel.appendChild(other);
     weeksSel.innerHTML='';
-    (o.weeks||[24]).forEach(function(w){ var op=document.createElement('option'); op.value=w; op.textContent=w+' weeks'; weeksSel.appendChild(op); });
+    (o.weeks||[24]).forEach(function(w){ var op=document.createElement('option'); op.value=w; op.textContent=w; weeksSel.appendChild(op); });
     weeksSel.value = (o.weeks||[]).indexOf(24)>=0 ? 24 : weeksSel.options[0].value;
     if(o.notice){ var n=$('notice'); n.textContent=o.notice; n.hidden=false; }
     if(o.status && o.status!=='OPEN'){
@@ -196,7 +197,7 @@
       .catch(function(){
         linkSel.innerHTML='<option value="">Could not load links</option>';
         var other=document.createElement('option'); other.value=OTHER; other.textContent='Type my link name'; linkSel.appendChild(other);
-        weeksSel.innerHTML=''; [8,12,24,52].forEach(function(w){ var op=document.createElement('option'); op.value=w; op.textContent=w+' weeks'; weeksSel.appendChild(op); }); weeksSel.value=24;
+        weeksSel.innerHTML=''; [8,12,24,52].forEach(function(w){ var op=document.createElement('option'); op.value=w; op.textContent=w; weeksSel.appendChild(op); }); weeksSel.value=24;
         show('bad','<h2>Could not load the list of links</h2><p>You can still type your link name. If this keeps happening, check your connection and reload the page.</p>');
       });
   }
@@ -206,8 +207,8 @@
     var v=linkSel.value, other=(v===OTHER);
     otherWrap.hidden=!other;
     var l=links.filter(function(x){return x.link===v;})[0];
-    if(l){ lineIn.max=l.lines; $('lineHint').textContent='1 to '+l.lines+' (your line in week 1)'; }
-    else { lineIn.removeAttribute('max'); $('lineHint').textContent='Your line in week 1'; }
+    if(l){ lineIn.max=l.lines; $('lineHint').textContent='1 to '+l.lines; }
+    else { lineIn.removeAttribute('max'); $('lineHint').textContent='Line you start on';}
     setErr('link','');
   });
 
