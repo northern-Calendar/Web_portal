@@ -207,7 +207,7 @@
     var v=linkSel.value, other=(v===OTHER);
     otherWrap.hidden=!other;
     var l=links.filter(function(x){return x.link===v;})[0];
-    if(l){ lineIn.max=l.lines; $('lineHint').textContent='1 to '+l.lines; }
+    if(l){ lineIn.max=l.lines; $('lineHint').textContent='1 to '+l.lines+' (Your line Number)'; }
     else { lineIn.removeAttribute('max'); $('lineHint').textContent='Line you start on';}
     setErr('link','');
   });
