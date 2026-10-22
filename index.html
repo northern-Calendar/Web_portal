@@ -53,6 +53,11 @@
   .ghost{background:var(--white);color:var(--purple-700);border:1.5px solid var(--purple-700);font-weight:600}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .chips button{min-height:40px;padding:6px 12px;font-size:.9rem}
+  .endcard{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--purple-100);border-left:6px solid var(--purple-700)}
+  .endcard[hidden]{display:none}
+  .endcard .end-label{font-size:.85rem;color:var(--ink-soft)}
+  .endcard .end-dates{font-size:1.1rem;font-weight:700;color:var(--purple-900);margin:2px 0}
+  .endcard .end-sub{font-size:.85rem;color:var(--ink-soft)}
   .notice{background:var(--blue-100);border-left:4px solid var(--blue-600);padding:10px 12px;border-radius:6px;font-size:.92rem;margin-bottom:16px}
   .status{display:none;border-radius:12px;padding:16px;margin-bottom:16px}
   .status.show{display:block}
@@ -125,6 +130,12 @@
     <div class="chips" id="chips"></div>
     <div class="err" id="err-start"></div>
 
+    <div class="endcard" id="endCard" aria-live="polite" hidden>
+      <div class="end-label">Your roster runs</div>
+      <div class="end-dates"><span id="endFrom"></span> &rarr; <span id="endTo"></span></div>
+      <div class="end-sub" id="endSub"></div>
+    </div>
+
     <div class="lbl" id="fmtLbl">Send me</div>
     <div role="radiogroup" aria-labelledby="fmtLbl">
       <label class="radio"><input type="radio" name="formats" value="ics" checked><span><b>Calendar file (ICS)</b><span class="hint">Works with Apple, Google, Outlook and Android calendars.</span></span></label>
@@ -165,6 +176,20 @@
   function parse(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
   function nice(d){ return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
   function sundayOnOrAfter(d,offsetWeeks){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()+((7-x.getDay())%7)+7*(offsetWeeks||0)); return x; }
+
+  // ---------- "Your roster runs" end-date card
+  function updateEnd(){
+    var card=$('endCard'), weeks=+weeksSel.value;
+    if(!startIn.value || !weeks){ card.hidden=true; return; }
+    var s=parse(startIn.value);
+    if(isNaN(s.getTime()) || s.getDay()!==0){ card.hidden=true; return; }   // not a Sunday: the form shows its own error on submit
+    var last=new Date(s.getFullYear(),s.getMonth(),s.getDate()+weeks*7-1);   // final Saturday
+    $('endFrom').textContent=nice(s);
+    $('endTo').textContent=nice(last);
+    $('endSub').textContent=weeks+' weeks ('+(weeks*7)+' days)';
+    card.hidden=false;
+  }
+
   function buildChips(){
     var c=$('chips'); c.innerHTML='';
     var now=new Date();
@@ -172,7 +197,7 @@
       var d=sundayOnOrAfter(now,w), b=document.createElement('button');
       b.type='button'; b.className='ghost'; b.textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
       b.setAttribute('aria-label','Use Sunday '+nice(d));
-      b.addEventListener('click',function(){ startIn.value=fmt(d); setErr('start',''); });
+      b.addEventListener('click',function(){ startIn.value=fmt(d); setErr('start',''); updateEnd(); });
       c.appendChild(b);
     });
   }
@@ -186,6 +211,7 @@
     weeksSel.innerHTML='';
     (o.weeks||[24]).forEach(function(w){ var op=document.createElement('option'); op.value=w; op.textContent=w; weeksSel.appendChild(op); });
     weeksSel.value = (o.weeks||[]).indexOf(24)>=0 ? 24 : weeksSel.options[0].value;
+    updateEnd();
     if(o.notice){ var n=$('notice'); n.textContent=o.notice; n.hidden=false; }
     if(o.status && o.status!=='OPEN'){
       go.disabled=true;
@@ -204,6 +230,7 @@
         linkSel.innerHTML='<option value="">Could not load links</option>';
         var other=document.createElement('option'); other.value=OTHER; other.textContent='Type my link name'; linkSel.appendChild(other);
         weeksSel.innerHTML=''; [8,12,24,52].forEach(function(w){ var op=document.createElement('option'); op.value=w; op.textContent=w; weeksSel.appendChild(op); }); weeksSel.value=24;
+        updateEnd();
         show('bad','<h2>Could not load the list of links</h2><p>You can still type your link name. If this keeps happening, check your connection and reload the page.</p>');
       });
   }
@@ -217,6 +244,10 @@
     else { lineIn.removeAttribute('max'); $('lineHint').textContent='Line you start on';}
     setErr('link','');
   });
+
+  startIn.addEventListener('input',updateEnd);
+  startIn.addEventListener('change',updateEnd);
+  weeksSel.addEventListener('change',updateEnd);
 
   function validate(){
     clearErrs(); var ok=true, first=null;
@@ -236,7 +267,7 @@
       bad('start',nice(p)+' is not a Sunday. Tap a Sunday below or pick another date.');
       var c=$('chips'); c.innerHTML='';
       [back,fwd].forEach(function(d){ var b=document.createElement('button'); b.type='button'; b.className='ghost'; b.textContent=nice(d);
-        b.addEventListener('click',function(){ startIn.value=fmt(d); setErr('start',''); buildChips(); }); c.appendChild(b); });
+        b.addEventListener('click',function(){ startIn.value=fmt(d); setErr('start',''); buildChips(); updateEnd(); }); c.appendChild(b); });
     }
     if(first) first.focus();
     return ok ? {name:$('name').value.trim(), email:em, link:link, line:ln, start:startIn.value, weeks:+weeksSel.value,
