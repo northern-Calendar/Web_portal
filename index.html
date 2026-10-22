@@ -130,9 +130,9 @@
     <div class="chips" id="chips"></div>
     <div class="err" id="err-start"></div>
 
-    <div class="endcard" id="endCard" aria-live="polite" hidden>
+    <div class="endcard" id="endCard" aria-live="polite">
       <div class="end-label">Your roster runs</div>
-      <div class="end-dates"><span id="endFrom"></span> &rarr; <span id="endTo"></span></div>
+      <div class="end-dates" id="endText">Choose a start date to see your end date</div>
       <div class="end-sub" id="endSub"></div>
     </div>
 
@@ -179,15 +179,14 @@
 
   // ---------- "Your roster runs" end-date card
   function updateEnd(){
-    var card=$('endCard'), weeks=+weeksSel.value;
-    if(!startIn.value || !weeks){ card.hidden=true; return; }
+    var txt=$('endText'), sub=$('endSub'), weeks=+weeksSel.value;
+    if(!startIn.value || !weeks){ txt.textContent='Choose a start date to see your end date'; sub.textContent=''; return; }
     var s=parse(startIn.value);
-    if(isNaN(s.getTime()) || s.getDay()!==0){ card.hidden=true; return; }   // not a Sunday: the form shows its own error on submit
+    if(isNaN(s.getTime())){ txt.textContent='Choose a start date to see your end date'; sub.textContent=''; return; }
+    if(s.getDay()!==0){ txt.textContent='Pick a Sunday to see your end date'; sub.textContent=''; return; }
     var last=new Date(s.getFullYear(),s.getMonth(),s.getDate()+weeks*7-1);   // final Saturday
-    $('endFrom').textContent=nice(s);
-    $('endTo').textContent=nice(last);
-    $('endSub').textContent=weeks+' weeks ('+(weeks*7)+' days)';
-    card.hidden=false;
+    txt.textContent=nice(s)+' \u2192 '+nice(last);
+    sub.textContent=weeks+' weeks ('+(weeks*7)+' days)';
   }
 
   function buildChips(){
